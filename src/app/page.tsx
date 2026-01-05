@@ -1,8 +1,10 @@
 import Image from "next/image";
+import ChatWidget from "@/components/ChatWidget";
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-black flex items-center justify-center px-6 py-12">
+      <ChatWidget />
       <main className="w-full max-w-5xl">
         <div className="bg-white border border-gray-300 rounded-2xl p-10 md:p-14 shadow-xl hover:shadow-2xl transition-shadow duration-300">
           {/* Layout dengan foto gitar & laptop di atas, teks di bawah */}
