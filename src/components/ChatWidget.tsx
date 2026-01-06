@@ -14,6 +14,7 @@ export default function ChatWidget() {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [hasShownWelcome, setHasShownWelcome] = useState(false)
 
@@ -42,17 +43,17 @@ export default function ChatWidget() {
     }
   }, [messages])
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom when new messages arrive or chat opens
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, isTyping])
+  }, [messages, isTyping, isOpen])
 
   // Show welcome message when chat is first opened
   useEffect(() => {
     if (isOpen && !hasShownWelcome) {
       const welcomeMessage: Message = {
         id: Date.now(),
-        text: 'Halo! Saya adalah Agil Bot 🎵💻 Saya bisa membantu Anda mengetahui lebih banyak tentang skills, portfolio, dan passion saya di bidang IT & Music. Ada yang bisa saya bantu? 😊',
+        text: 'Halo! Saya adalah Faqih Bot 🎵💻 Saya bisa membantu Anda mengetahui lebih banyak tentang skills, portfolio, dan passion saya di bidang IT & Music. Ada yang bisa saya bantu? 😊',
         sender: 'bot',
         timestamp: new Date()
       }
@@ -62,79 +63,85 @@ export default function ChatWidget() {
     }
   }, [isOpen, hasShownWelcome])
 
-  // Bot auto-reply with contextual responses
-  const getBotReply = (userMessage: string): string => {
-    const lowerMessage = userMessage.toLowerCase()
-    
-    if (lowerMessage.includes('portfolio') || lowerMessage.includes('project') || lowerMessage.includes('karya')) {
-      return 'Saya passionate tentang web development dan music production! Portfolio saya mencakup berbagai project IT dan karya musik. Saya selalu mencari cara untuk mengintegrasikan teknologi dengan seni 🎨💻'
+  // Fungsi untuk mengirim pesan ke API
+  const sendMessageToAI = async (userMessage: string) => {
+    try {
+      // Siapkan history untuk context (ambil 10 pesan terakhir)
+      const history = messages.slice(-10).map((msg) => ({
+        role: msg.sender === 'user' ? 'user' : 'assistant',
+        content: msg.text,
+      }))
+
+      // Panggil API
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          history: history,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Gagal mendapatkan response')
+      }
+
+      return data.message
+    } catch (error) {
+      console.error('Error calling AI:', error)
+      throw error
     }
-    
-    if (lowerMessage.includes('contact') || lowerMessage.includes('kontak') || lowerMessage.includes('hubungi')) {
-      return 'Anda bisa menghubungi saya melalui email atau social media yang tertera di portfolio ini. Saya selalu terbuka untuk kolaborasi dan diskusi! 📧'
-    }
-    
-    if (lowerMessage.includes('skill') || lowerMessage.includes('kemampuan') || lowerMessage.includes('keahlian')) {
-      return 'Keahlian saya meliputi IT & Development, Music Production, dan Web Design. Saya percaya teknologi dan musik adalah dua aspek kreativitas yang saling melengkapi! 🚀🎵'
-    }
-    
-    if (lowerMessage.includes('help') || lowerMessage.includes('bantuan') || lowerMessage.includes('bantu')) {
-      return 'Saya bisa membantu Anda dengan informasi tentang:\n• Portfolio & Projects\n• Skills & Expertise\n• Contact Information\n• Music & IT Background\n\nSilakan tanya apa saja! 💡'
-    }
-    
-    if (lowerMessage.includes('music') || lowerMessage.includes('musik') || lowerMessage.includes('gitar')) {
-      return 'Musik adalah passion saya! Saya menikmati musik sebagai pendengar dan creator. Kombinasi antara musik dan teknologi membuat saya bisa berkreasi dengan cara yang unik 🎸🎹'
-    }
-    
-    if (lowerMessage.includes('halo') || lowerMessage.includes('hai') || lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
-      return 'Halo! Senang bertemu dengan Anda! Ada yang bisa saya bantu? 😊'
-    }
-    
-    if (lowerMessage.includes('terima kasih') || lowerMessage.includes('thanks') || lowerMessage.includes('thank you')) {
-      return 'Sama-sama! Senang bisa membantu. Jangan ragu untuk bertanya lagi kapan saja! 🙏'
-    }
-    
-    // Default responses
-    const defaultResponses = [
-      'Interesting! Tell me more 🤔',
-      'Saya mengerti. Ada yang lain yang ingin Anda tanyakan?',
-      'That\'s a great point! Apa lagi yang ingin Anda ketahui tentang saya?',
-      'Noted! Feel free to ask anything about my work or interests 💼🎵',
-      'Terima kasih sudah berbagi! Ada pertanyaan lain untuk saya?'
-    ]
-    
-    return defaultResponses[Math.floor(Math.random() * defaultResponses.length)]
   }
 
-  const handleSend = () => {
-    if (!inputValue.trim()) return
+  // Handle kirim pesan
+  const handleSend = async () => {
+    if (!inputValue.trim() || isTyping) return
 
-    // Add user message
-    const userMessage: Message = {
-      id: Date.now(),
-      text: inputValue,
-      sender: 'user',
-      timestamp: new Date()
-    }
-
-    setMessages(prev => [...prev, userMessage])
+    const userMessage = inputValue.trim()
     setInputValue('')
 
-    // Show typing indicator
+    // Tambah pesan user
+    const userMsg: Message = {
+      id: Date.now(),
+      text: userMessage,
+      sender: 'user',
+      timestamp: new Date(),
+    }
+    setMessages((prev) => [...prev, userMsg])
+
+    // Set loading (typing indicator)
     setIsTyping(true)
 
-    // Bot reply after delay (simulating typing)
-    setTimeout(() => {
-      const botReply: Message = {
+    try {
+      // Panggil AI
+      const aiResponse = await sendMessageToAI(userMessage)
+
+      // Tambah response AI
+      const botMsg: Message = {
         id: Date.now() + 1,
-        text: getBotReply(inputValue),
+        text: aiResponse,
         sender: 'bot',
-        timestamp: new Date()
+        timestamp: new Date(),
       }
+      setMessages((prev) => [...prev, botMsg])
+    } catch (error) {
+      // Tampilkan error message
+      const errorMessage = error instanceof Error ? error.message : 'Maaf, terjadi kesalahan. Coba lagi ya! 😅'
       
-      setMessages(prev => [...prev, botReply])
+      const errorMsg: Message = {
+        id: Date.now() + 1,
+        text: `Error: ${errorMessage}`,
+        sender: 'bot',
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, errorMsg])
+    } finally {
       setIsTyping(false)
-    }, 1000 + Math.random() * 1000) // Random delay between 1-2 seconds
+    }
   }
 
   // Format timestamp
@@ -159,31 +166,57 @@ export default function ChatWidget() {
     <>
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 w-[380px] h-[550px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border-2 border-gray-300 z-50 animate-slideUp">
+        <div 
+          className={`fixed bg-white shadow-2xl flex flex-col overflow-hidden border-2 border-gray-300 z-50 animate-slideUp transition-all duration-300
+            ${isFullscreen 
+              ? 'top-0 left-0 w-full h-full rounded-none' 
+              : 'bottom-24 right-6 w-[380px] h-[550px] rounded-2xl'
+            }`}
+        >
           {/* Header */}
           <div className="bg-gradient-to-r from-gray-700 to-gray-900 text-white p-4 flex justify-between items-center border-b-2 border-gray-400">
             <div className="flex items-center gap-3">
               <span className="text-2xl">🤖</span>
               <div className="flex flex-col">
-                <span className="font-bold text-lg">Agil Bot</span>
+                <span className="font-bold text-lg">Faqih Bot</span>
                 <span className="text-xs text-gray-300">Online • Always ready to help</span>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setIsFullscreen(!isFullscreen)}
+                className="hover:bg-white/20 rounded-full p-2 transition-all duration-200 text-white/90 hover:text-white"
+                aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+                title={isFullscreen ? "Keluar layar penuh" : "Layar penuh"}
+              >
+                {isFullscreen ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+                  </svg>
+                )}
+              </button>
               <button
                 onClick={handleClearHistory}
-                className="hover:bg-gray-600 rounded-full p-2 transition-all duration-200 hover:scale-110"
+                className="hover:bg-white/20 rounded-full p-2 transition-all duration-200 text-white/90 hover:text-white hover:text-red-300"
                 aria-label="Clear chat history"
                 title="Hapus riwayat chat"
               >
-                <span className="text-lg">🗑️</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2M10 11v6M14 11v6"/>
+                </svg>
               </button>
               <button
                 onClick={() => setIsOpen(false)}
-                className="hover:bg-gray-600 rounded-full p-2 transition-all duration-200 hover:rotate-90"
+                className="hover:bg-red-500/80 rounded-full p-2 transition-all duration-200 text-white/90 hover:text-white ml-1"
                 aria-label="Close chat"
               >
-                <span className="text-xl">✕</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 6 6 18M6 6l12 12"/>
+                </svg>
               </button>
             </div>
           </div>
