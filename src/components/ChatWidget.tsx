@@ -15,7 +15,9 @@ import {
   Download, 
   Check,
   Bot,
-  User
+  User,
+  Grid,
+  Image as ImageIcon
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -44,6 +46,8 @@ export default function ChatWidget() {
   const [isTyping, setIsTyping] = useState(false)
   const [isGeneratingImage, setIsGeneratingImage] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [showGallery, setShowGallery] = useState(false)
+  const [lightboxImage, setLightboxImage] = useState<{ src: string, prompt: string } | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -244,6 +248,10 @@ export default function ChatWidget() {
                 </div>
               </div>
               <div className="flex items-center gap-1">
+                <button onClick={() => setShowGallery(!showGallery)} className={`p-2 hover:bg-white/5 rounded-full transition-colors ${showGallery ? 'text-white bg-white/10' : 'text-white/40 hover:text-white'}`} title="Gallery">
+                  <Grid className="w-4 h-4" />
+                </button>
+                <div className="w-px h-4 bg-white/10 mx-1" />
                 <button onClick={handleDownload} className="p-2 hover:bg-white/5 rounded-full text-white/40 hover:text-white transition-colors" title="Download Chat">
                   <Download className="w-4 h-4" />
                 </button>
@@ -258,6 +266,109 @@ export default function ChatWidget() {
                 </button>
               </div>
             </div>
+
+
+            {/* Gallery View */}
+            {showGallery && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                className="absolute inset-0 top-[73px] bg-[#0a0a0a] z-20 flex flex-col p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-white font-bold text-sm flex items-center gap-2">
+                    <ImageIcon className="w-4 h-4 text-[#1DB954]" />
+                    Galeri Gambar
+                  </h3>
+                  <span className="text-xs text-white/40">
+                    {messages.filter(m => m.image).length} gambar
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {messages.filter(m => m.image).map((msg) => (
+                    <div 
+                      key={msg.id}
+                      onClick={() => setLightboxImage({ src: msg.image!, prompt: msg.imagePrompt || 'Generated Image' })}
+                      className="aspect-square relative group rounded-xl overflow-hidden cursor-pointer border border-white/10 bg-white/5"
+                    >
+                      <img 
+                        src={msg.image?.replace('pollinations.ai/p/', 'image.pollinations.ai/prompt/')} 
+                        alt={msg.imagePrompt}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Maximize2 className="w-6 h-6 text-white" />
+                      </div>
+                    </div>
+                  ))}
+                  {messages.filter(m => m.image).length === 0 && (
+                     <div className="col-span-full py-12 text-center text-white/30 text-xs">
+                        Belum ada gambar yang dibuat.
+                     </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Lightbox Overlay */}
+            <AnimatePresence>
+              {lightboxImage && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setLightboxImage(null)}
+                  className="fixed inset-0 z-[110] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4"
+                >
+                  <button 
+                    onClick={() => setLightboxImage(null)}
+                    className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                  
+                  <div 
+                    className="relative max-w-4xl w-full max-h-[85vh] flex flex-col items-center gap-4"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <img 
+                      src={lightboxImage.src.replace('pollinations.ai/p/', 'image.pollinations.ai/prompt/')} 
+                      alt={lightboxImage.prompt}
+                      className="max-h-[70vh] w-auto rounded-xl shadow-2xl border border-white/10"
+                    />
+                    <div className="text-center space-y-2">
+                      <p className="text-white font-medium text-sm px-4">{lightboxImage.prompt}</p>
+                      <button 
+                        onClick={async () => {
+                          try {
+                            const fixedUrl = lightboxImage.src.replace('pollinations.ai/p/', 'image.pollinations.ai/prompt/')
+                            const response = await fetch(fixedUrl)
+                            const blob = await response.blob()
+                            const url = window.URL.createObjectURL(blob)
+                            const link = document.createElement('a')
+                            link.href = url
+                            link.download = `faqih-ai-${Date.now()}.png`
+                            document.body.appendChild(link)
+                            link.click()
+                            document.body.removeChild(link)
+                            window.URL.revokeObjectURL(url)
+                          } catch (e) {
+                            window.open(lightboxImage.src, '_blank')
+                          }
+                        }}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-white text-black rounded-full text-xs font-bold hover:bg-white/90 transition-colors"
+                      >
+                        <Download className="w-3 h-3" />
+                        Download HD
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-4 space-y-8 bg-[#0a0a0a] scrollbar-thin scrollbar-thumb-white/10">
@@ -310,7 +421,7 @@ export default function ChatWidget() {
                         <div className="mt-3 space-y-2">
                           <div className="relative group rounded-xl overflow-hidden border border-white/10 bg-black/20 aspect-square flex items-center justify-center">
                             <img 
-                              src={msg.image} 
+                              src={msg.image?.replace('pollinations.ai/p/', 'image.pollinations.ai/prompt/')} 
                               alt={msg.imagePrompt || "Generated result"} 
                               className="w-full h-full object-cover cursor-zoom-in hover:scale-[1.02] transition-transform duration-500"
                               referrerPolicy="no-referrer"
@@ -327,36 +438,23 @@ export default function ChatWidget() {
                                   parent.appendChild(errorText);
                                 }
                               }}
-                              onClick={() => window.open(msg.image, '_blank')}
+                              onClick={() => setLightboxImage({ src: msg.image!, prompt: msg.imagePrompt || 'Generated Image' })}
                             />
                             <div className="absolute inset-4 top-auto flex items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity">
                               <button 
-                                onClick={async (e) => {
-                                  e.stopPropagation();
-                                  try {
-                                    const response = await fetch(msg.image!);
-                                    const blob = await response.blob();
-                                    const url = window.URL.createObjectURL(blob);
-                                    const link = document.createElement('a');
-                                    link.href = url;
-                                    link.download = `faqih-ai-${Date.now()}.png`;
-                                    document.body.appendChild(link);
-                                    link.click();
-                                    document.body.removeChild(link);
-                                    window.URL.revokeObjectURL(url);
-                                  } catch (error) {
-                                    window.open(msg.image, '_blank');
-                                  }
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setLightboxImage({ src: msg.image!, prompt: msg.imagePrompt || 'Generated Image' })
                                 }}
                                 className="p-2 bg-black/60 backdrop-blur-md rounded-lg border border-white/20 hover:bg-white/20 transition-colors shadow-xl"
-                                title="Download Image"
+                                title="Zoom Image"
                               >
-                                <Download className="w-4 h-4 text-white" />
+                                <Maximize2 className="w-4 h-4 text-white" />
                               </button>
                             </div>
                           </div>
                           <p className="text-[9px] text-white/40 italic px-1">
-                            Klik gambar untuk melihat ukuran penuh
+                            Klik gambar untuk memperbesar
                           </p>
                         </div>
                       )}
