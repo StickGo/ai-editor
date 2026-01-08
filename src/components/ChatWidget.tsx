@@ -29,10 +29,10 @@ interface Message {
 }
 
 const CHAT_STARTERS = [
+  { label: 'Band Favorit 🎸', text: 'Apa saja top 3 band favoritnya Agil? Ceritakan dong!' },
   { label: 'Lihat Proyek 🎨', text: 'Ceritakan tentang proyek-proyek seru yang pernah Agil kerjakan!' },
   { label: 'Skill Agil 💻', text: 'Apa saja teknologi dan bahasa pemrograman yang dikuasai Agil?' },
-  { label: 'Hubungi Agil 📧', text: 'Bagaimana cara terbaik untuk menghubungi Agil untuk kolaborasi?' },
-  { label: 'Hobi & Musik 🎵', text: 'Apa saja hobi Agil di luar koding? Katanya suka main musik ya?' }
+  { label: 'Hubungi Agil 📧', text: 'Bagaimana cara terbaik untuk menghubungi Agil untuk kolaborasi?' }
 ]
 
 export default function ChatWidget() {
@@ -208,7 +208,7 @@ export default function ChatWidget() {
             className={`fixed bg-[#0a0a0a]/95 backdrop-blur-2xl shadow-2xl flex flex-col overflow-hidden border border-white/10 z-[100] transition-all duration-300
               ${isFullscreen 
                 ? 'top-4 left-4 right-4 bottom-4 w-auto h-auto rounded-3xl' 
-                : 'bottom-24 right-6 w-[380px] h-[600px] max-h-[80vh] rounded-3xl'
+                : 'bottom-24 left-4 right-4 sm:left-auto sm:right-6 w-auto sm:w-[380px] h-[600px] max-h-[80vh] rounded-2xl'
               }`}
           >
             {/* Header */}
