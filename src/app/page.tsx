@@ -212,7 +212,15 @@ export default function Home() {
              </div>
 
              {/* Timeline Content */}
-             <div className="md:col-span-8 space-y-24 relative border-l border-[var(--foreground)]/10 pl-8 md:pl-16 py-12">
+             <div className="md:col-span-8 space-y-24 relative pl-8 md:pl-16 py-12">
+                {/* Vertical Line with Progress */}
+                <div className="absolute left-0 md:left-4 top-0 bottom-0 w-[2px] bg-white/5 overflow-hidden">
+                  <motion.div 
+                    className="absolute top-0 left-0 right-0 bg-gradient-to-b from-transparent via-[var(--color-medium)] to-[var(--color-medium)] origin-top h-full"
+                    style={{ scaleY: scrollY }}
+                  />
+                </div>
+
                 {PORTFOLIO_DATA.journey.map((item: any, index: number) => (
                   <motion.div
                     key={index}
@@ -222,23 +230,28 @@ export default function Home() {
                     transition={{ duration: 0.6, delay: index * 0.1 }}
                     className="relative group"
                   >
-                     {/* Timeline Node */}
-                     <div className="absolute -left-[41px] md:-left-[73px] top-2 w-5 h-5 rounded-full bg-[var(--background)] border-4 border-[var(--color-medium)] z-10 group-hover:scale-125 transition-transform duration-300" />
+                     {/* Timeline Node with Glow */}
+                     <div className="absolute -left-[41px] md:-left-[57px] top-2 z-10">
+                        <div className="w-5 h-5 rounded-full bg-[var(--background)] border-4 border-white/20 group-hover:border-[var(--color-medium)] transition-all duration-500 relative">
+                           <div className="absolute inset-0 rounded-full bg-[var(--color-medium)] opacity-0 group-hover:opacity-100 blur-md transition-opacity duration-500" />
+                           <div className="absolute inset-0 rounded-full bg-[var(--color-medium)] scale-0 group-hover:scale-100 transition-transform duration-500" />
+                        </div>
+                     </div>
                      
                      <div className="mb-2 flex items-center gap-4">
-                        <span className="text-[var(--color-medium)] font-bold tracking-widest uppercase text-xs border border-[var(--color-medium)]/30 px-3 py-1 rounded-full">
+                        <span className="text-[var(--color-medium)] font-bold tracking-widest uppercase text-[10px] border border-[var(--color-medium)]/30 px-3 py-1 rounded-full bg-[var(--color-medium)]/5">
                           {item.date}
                         </span>
                      </div>
                      
-                     <h3 className="text-3xl font-bold text-[var(--foreground)] mb-2 group-hover:text-[var(--color-medium)] transition-colors">
+                     <h3 className="text-3xl font-bold text-white mb-2 group-hover:tracking-wider transition-all duration-500">
                        {item.role}
                      </h3>
-                     <h4 className="text-xl text-[var(--foreground)]/60 font-serif italic mb-6">
+                     <h4 className="text-xl text-white/40 font-serif italic mb-6">
                        @ {item.company}
                      </h4>
                      
-                     <p className="text-[var(--foreground)]/80 leading-relaxed text-lg font-light tracking-wide">
+                     <p className="text-white/60 leading-relaxed text-lg font-light tracking-wide max-w-2xl">
                         {item.description}
                      </p>
                   </motion.div>
@@ -248,25 +261,26 @@ export default function Home() {
         </section>
 
         {/* PROJECTS SECTION - TABBED CATEGORIES */}
-        <section id="projects">
+        <section id="projects" className="relative">
           <motion.div
              initial={{ opacity: 0, y: 30 }}
              whileInView={{ opacity: 1, y: 0 }}
              viewport={{ once: true }}
-             className="mb-12 text-center"
+             className="mb-16 text-center"
           >
-             <h2 className="text-3xl md:text-5xl font-bold font-heading mb-8 border-b border-white/10 pb-4 inline-block">Featured Works</h2>
+             <h2 className="text-4xl md:text-7xl font-bold font-heading mb-4 text-white tracking-tighter">Featured Works</h2>
+             <div className="w-24 h-1 bg-[var(--color-medium)] mx-auto mb-10" />
              
              {/* Category Tabs */}
-             <div className="flex flex-wrap justify-center gap-2 mb-12">
+             <div className="flex flex-wrap justify-center gap-4 mb-12">
                {categories.map((cat, idx) => (
                  <button
                    key={idx}
                    onClick={() => setActiveTab(cat)}
-                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 border ${
+                   className={`px-6 py-2 rounded-full text-xs font-mono tracking-widest uppercase transition-all duration-500 border ${
                      activeTab === cat 
-                       ? "bg-white text-black border-white" 
-                       : "bg-transparent text-white/50 border-white/10 hover:border-white/30 hover:text-white"
+                       ? "bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.3)]" 
+                       : "bg-transparent text-white/40 border-white/5 hover:border-white/20 hover:text-white"
                    }`}
                  >
                    {cat}
@@ -275,33 +289,52 @@ export default function Home() {
              </div>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
             <AnimatePresence mode="popLayout">
               {filteredProjects.map((project: any, index: number) => (
                 <motion.div
                   key={project.title}
                   layout
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ duration: 0.3 }}
-                  className="group relative h-72 md:h-96 bg-[var(--color-dark)] border border-white/10 hover:border-white/30 transition-colors overflow-hidden"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  className="group relative aspect-[4/3] md:aspect-video bg-[var(--color-dark)] border border-white/5 hover:border-white/20 transition-all duration-700 overflow-hidden cursor-pointer"
                 >
-                  <Image 
-                    src={project.image} 
-                    alt={project.title} 
-                    fill 
-                    className="object-cover opacity-60 group-hover:opacity-40 transition-all duration-700 grayscale group-hover:grayscale-0 group-hover:scale-105" 
-                  />
-                  <div className="absolute inset-0 p-8 flex flex-col justify-end bg-gradient-to-t from-black via-black/60 to-transparent">
-                     <div className="mb-4 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 delay-100">
-                       <span className="text-[var(--color-light)] text-[10px] font-bold tracking-widest uppercase border border-white/20 px-3 py-1 bg-black/50 backdrop-blur-sm">
-                         {project.category}
-                       </span>
-                     </div>
-                     <h3 className="text-2xl font-bold font-heading mb-2 text-white translate-y-4 group-hover:translate-y-0 transition-transform duration-500">{project.title}</h3>
-                     <p className="text-white/70 text-sm mb-6 line-clamp-2 font-mono translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 delay-200">{project.description}</p>
-                  </div>
+                  <Link href={`/projects/${project.slug}`}>
+                    <Image 
+                      src={project.image} 
+                      alt={project.title} 
+                      fill 
+                      className="object-cover opacity-50 group-hover:opacity-100 transition-all duration-1000 grayscale group-hover:grayscale-0 group-hover:scale-105" 
+                    />
+                    
+                    {/* Overlay with Content */}
+                    <div className="absolute inset-0 p-10 flex flex-col justify-end bg-gradient-to-t from-black via-black/40 to-transparent opacity-100 group-hover:via-black/20 transition-all duration-700">
+                       <div className="translate-y-8 group-hover:translate-y-0 transition-transform duration-700">
+                         <div className="mb-4">
+                           <span className="text-[var(--color-medium)] text-[10px] font-bold tracking-widest uppercase px-3 py-1 bg-[var(--color-medium)]/10 border border-[var(--color-medium)]/30 backdrop-blur-sm rounded-sm">
+                             {project.category}
+                           </span>
+                         </div>
+                         <h3 className="text-3xl md:text-4xl font-bold font-heading mb-3 text-white">
+                           {project.title}
+                         </h3>
+                         <p className="text-white/60 text-sm md:text-base mb-6 line-clamp-2 font-light tracking-wide max-w-md opacity-0 group-hover:opacity-100 transition-opacity duration-700 delay-100 italic">
+                           {project.description}
+                         </p>
+                         
+                         {/* View Project Indicator */}
+                         <div className="flex items-center gap-2 text-white/40 group-hover:text-white transition-colors duration-500 font-mono text-xs uppercase tracking-[0.3em] opacity-0 group-hover:opacity-100 transform translate-x-4 group-hover:translate-x-0 delay-200">
+                           <span>Detail Proyek</span>
+                           <ExternalLink className="w-4 h-4" />
+                         </div>
+                       </div>
+                    </div>
+
+                    {/* Decorative Corner */}
+                    <div className="absolute top-4 right-4 w-8 h-8 border-t border-r border-white/0 group-hover:border-white/20 transition-all duration-700 delay-300" />
+                  </Link>
                 </motion.div>
               ))}
             </AnimatePresence>
@@ -309,17 +342,18 @@ export default function Home() {
         </section>
 
         {/* SERVICES SECTION */}
-        <section>
+        <section className="relative">
           <motion.div
-             initial={{ opacity: 0, y: 30 }}
-             whileInView={{ opacity: 1, y: 0 }}
+             initial={{ opacity: 0, scale: 0.95 }}
+             whileInView={{ opacity: 1, scale: 1 }}
              viewport={{ once: true }}
-             className="mb-12 text-center"
+             className="mb-16 text-center"
           >
-             <h2 className="text-3xl md:text-5xl font-bold font-heading mb-4 border-b border-white/10 pb-4 inline-block">What I Do</h2>
+             <h2 className="text-4xl md:text-6xl font-bold font-heading mb-4 text-white">Expertise</h2>
+             <p className="text-white/40 font-mono text-xs uppercase tracking-widest">Solutions I provide</p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {PORTFOLIO_DATA.services.map((service: any, index: number) => (
               <motion.div
                 key={index}
@@ -327,46 +361,65 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                className="group p-8 border border-white/10 bg-[var(--color-dark)]/50 hover:bg-[var(--color-dark)] transition-colors text-center"
+                className="group relative p-10 border border-white/5 bg-[var(--color-dark)]/50 hover:bg-[var(--color-dark)] transition-all duration-500 overflow-hidden"
               >
-                <div className="w-16 h-16 mx-auto mb-6 flex items-center justify-center rounded-full bg-white/5 group-hover:bg-white/10 transition-colors">
-                  {index === 0 && <Code className="w-8 h-8 text-white" />}
-                  {index === 1 && <Gamepad2 className="w-8 h-8 text-white" />}
-                  {index === 2 && <Music className="w-8 h-8 text-white" />}
+                {/* Background Number Accent */}
+                <div className="absolute -top-4 -right-4 text-8xl font-black text-white/5 group-hover:text-white/10 transition-colors pointer-events-none">
+                  0{index + 1}
                 </div>
-                <h3 className="text-xl font-bold text-white mb-4">{service.title}</h3>
-                <p className="text-white/60 text-sm leading-relaxed">{service.description}</p>
+
+                <div className="w-14 h-14 mb-8 flex items-center justify-center rounded-xl bg-white/5 group-hover:bg-[var(--color-medium)] group-hover:text-black transition-all duration-500 rotate-3 group-hover:rotate-0">
+                  {index === 0 && <Code className="w-7 h-7" />}
+                  {index === 1 && <Gamepad2 className="w-7 h-7" />}
+                  {index === 2 && <Music className="w-7 h-7" />}
+                </div>
+                
+                <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-[var(--color-medium)] transition-colors">{service.title}</h3>
+                <p className="text-white/50 text-base leading-relaxed font-light">{service.description}</p>
+                
+                {/* Hover Line */}
+                <div className="absolute bottom-0 left-0 h-1 bg-[var(--color-medium)] w-0 group-hover:w-full transition-all duration-500" />
               </motion.div>
             ))}
           </div>
         </section>
 
         {/* TESTIMONIALS SECTION */}
-        <section>
+        <section className="relative">
           <motion.div
              initial={{ opacity: 0, y: 30 }}
              whileInView={{ opacity: 1, y: 0 }}
              viewport={{ once: true }}
-             className="mb-12 text-center"
+             className="mb-16 text-center"
           >
-             <h2 className="text-3xl md:text-5xl font-bold font-heading mb-4 border-b border-white/10 pb-4 inline-block">Appreciation</h2>
+             <h2 className="text-4xl md:text-6xl font-bold font-heading mb-4 text-white tracking-tight">Kind Words</h2>
+             <div className="flex justify-center gap-2">
+                {[1, 2, 3].map(i => <div key={i} className="w-2 h-2 rounded-full bg-[var(--color-medium)]/30" />)}
+             </div>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
              {PORTFOLIO_DATA.testimonials.map((testimoni: any, index: number) => (
                <motion.div 
                  key={index}
-                 initial={{ opacity: 0, scale: 0.9 }}
-                 whileInView={{ opacity: 1, scale: 1 }}
+                 initial={{ opacity: 0, y: 20 }}
+                 whileInView={{ opacity: 1, y: 0 }}
                  viewport={{ once: true }}
                  transition={{ delay: index * 0.1 }}
-                 className="relative p-8 border border-white/5 bg-[var(--color-dark)]"
+                 className="relative p-10 border border-white/5 bg-[var(--color-dark)] hover:border-white/10 transition-colors group"
                >
-                 <div className="text-4xl text-white/10 font-serif absolute top-4 left-4">“</div>
-                 <p className="text-white/80 italic mb-6 relative z-10 font-light">"{testimoni.quote}"</p>
-                 <div>
-                   <div className="font-bold text-white">{testimoni.name}</div>
-                   <div className="text-xs text-white/40 uppercase tracking-wider">{testimoni.role}</div>
+                 <div className="text-6xl text-[var(--color-medium)] opacity-20 font-serif absolute top-4 left-6 group-hover:opacity-40 transition-opacity">“</div>
+                 <p className="text-white/70 italic mb-8 relative z-10 font-light text-lg leading-relaxed">
+                   {testimoni.quote}
+                 </p>
+                 <div className="flex items-center gap-4 border-t border-white/5 pt-6">
+                   <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center font-bold text-white/50 border border-white/10 group-hover:bg-[var(--color-medium)] group-hover:text-black transition-colors">
+                     {testimoni.name.charAt(0)}
+                   </div>
+                   <div>
+                     <div className="font-bold text-white text-sm tracking-wide">{testimoni.name}</div>
+                     <div className="text-[10px] text-white/40 uppercase tracking-[0.2em]">{testimoni.role}</div>
+                   </div>
                  </div>
                </motion.div>
              ))}
