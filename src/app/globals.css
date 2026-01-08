@@ -1,26 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
+@theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* MONOCHROME DARK THEME (LOCKED) */
+:root {
+  --background: #000000;
+  --foreground: #ededed;
+  --color-darkest: #000000;
+  --color-dark: #121212;
+  --color-medium: #ffffff;
+  --color-light: #f5f5f5;
+  
+  --card-bg: #121212;
+  --border-color: #333333;
+  --overlay-opacity: 0.5;
+  --hero-overlay: rgba(0, 0, 0, 0.8);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Scrollbar Customization */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-darkest);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-medium);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-light);
 }

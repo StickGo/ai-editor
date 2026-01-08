@@ -53,7 +53,7 @@ export default function ChatWidget() {
     if (isOpen && !hasShownWelcome) {
       const welcomeMessage: Message = {
         id: Date.now(),
-        text: 'Halo! Saya adalah Faqih Bot 🎵💻 Saya bisa membantu Anda mengetahui lebih banyak tentang skills, portfolio, dan passion saya di bidang IT & Music. Ada yang bisa saya bantu? 😊',
+        text: 'Halo! Saya Faqih Bot 💻\n\nSaya di sini untuk membantu Anda mengetahui lebih banyak tentang Agil - seorang developer dan musisi yang passionate.\n\nTanyakan saya tentang:\n- 🎮 Game Development Projects\n- 💻 Web & App Development\n- 🎵 Music Production\n- 🚀 Pengalaman Kerja\n\nAda yang ingin kamu ketahui?',
         sender: 'bot',
         timestamp: new Date()
       }
@@ -167,27 +167,26 @@ export default function ChatWidget() {
       {/* Chat Window */}
       {isOpen && (
         <div 
-          className={`fixed bg-white shadow-2xl flex flex-col overflow-hidden border-2 border-gray-300 z-50 animate-slideUp transition-all duration-300
+          className={`fixed bg-[#0a0a0a] shadow-2xl flex flex-col overflow-hidden border border-[#1a1a1a] z-50 animate-slideUp transition-all duration-300
             ${isFullscreen 
               ? 'top-0 left-0 w-full h-full rounded-none' 
               : 'bottom-24 right-6 w-[380px] h-[550px] rounded-2xl'
             }`}
         >
           {/* Header */}
-          <div className="bg-gradient-to-r from-gray-700 to-gray-900 text-white p-4 flex justify-between items-center border-b-2 border-gray-400">
+          <div className="bg-[#0a0a0a] text-white p-4 flex justify-between items-center border-b border-[#1a1a1a]">
             <div className="flex items-center gap-3">
               <span className="text-2xl">🤖</span>
               <div className="flex flex-col">
-                <span className="font-bold text-lg">Faqih Bot</span>
-                <span className="text-xs text-gray-300">Online • Always ready to help</span>
+                <span className="font-bold text-lg font-heading">Faqih Bot</span>
+                <span className="text-xs opacity-70">Portfolio Assistant</span>
               </div>
             </div>
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setIsFullscreen(!isFullscreen)}
-                className="hover:bg-white/20 rounded-full p-2 transition-all duration-200 text-white/90 hover:text-white"
+                className="hover:bg-[var(--background)]/20 rounded-full p-2 transition-all duration-200"
                 aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-                title={isFullscreen ? "Keluar layar penuh" : "Layar penuh"}
               >
                 {isFullscreen ? (
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -201,9 +200,8 @@ export default function ChatWidget() {
               </button>
               <button
                 onClick={handleClearHistory}
-                className="hover:bg-white/20 rounded-full p-2 transition-all duration-200 text-white/90 hover:text-white hover:text-red-300"
+                className="hover:bg-[var(--background)]/20 rounded-full p-2 transition-all duration-200 hover:text-red-300"
                 aria-label="Clear chat history"
-                title="Hapus riwayat chat"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2M10 11v6M14 11v6"/>
@@ -211,7 +209,7 @@ export default function ChatWidget() {
               </button>
               <button
                 onClick={() => setIsOpen(false)}
-                className="hover:bg-red-500/80 rounded-full p-2 transition-all duration-200 text-white/90 hover:text-white ml-1"
+                className="hover:bg-red-500/80 rounded-full p-2 transition-all duration-200 ml-1"
                 aria-label="Close chat"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -222,33 +220,33 @@ export default function ChatWidget() {
           </div>
 
           {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-gray-50 to-white">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[var(--background)]">
             {messages.map(msg => (
               <div
                 key={msg.id}
                 className={`flex gap-2 items-end ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn`}
               >
                 {msg.sender === 'bot' && (
-                  <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-lg flex-shrink-0 border-2 border-gray-300">
+                  <div className="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center text-lg flex-shrink-0 border border-[#2a2a2a]">
                     🤖
                   </div>
                 )}
                 <div className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}>
                   <div
-                    className={`max-w-[260px] px-4 py-2.5 rounded-2xl shadow-md ${
+                    className={`max-w-[260px] px-4 py-2.5 rounded-2xl shadow-sm ${
                       msg.sender === 'user'
-                        ? 'bg-gradient-to-br from-gray-700 to-gray-900 text-white rounded-br-md border-2 border-gray-600'
-                        : 'bg-white text-gray-800 rounded-bl-md border-2 border-gray-300'
+                        ? 'bg-[#f5f5f5] text-black rounded-br-md'
+                        : 'bg-[#1a1a1a] text-white rounded-bl-md border border-[#2a2a2a]'
                     }`}
                   >
                     <p className="text-sm leading-relaxed whitespace-pre-line">{msg.text}</p>
                   </div>
-                  <span className="text-xs text-gray-500 mt-1 px-2">
+                  <span className="text-xs opacity-50 mt-1 px-2 text-[var(--foreground)]">
                     {formatTime(msg.timestamp)}
                   </span>
                 </div>
                 {msg.sender === 'user' && (
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center text-lg flex-shrink-0 border-2 border-gray-400">
+                  <div className="w-8 h-8 rounded-full bg-[#f5f5f5] text-black flex items-center justify-center text-lg flex-shrink-0">
                     👤
                   </div>
                 )}
@@ -258,10 +256,10 @@ export default function ChatWidget() {
             {/* Typing Indicator */}
             {isTyping && (
               <div className="flex gap-2 items-end justify-start animate-fadeIn">
-                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-lg flex-shrink-0 border-2 border-gray-300">
+                <div className="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center text-lg flex-shrink-0 border border-[#2a2a2a]">
                   🤖
                 </div>
-                <div className="bg-white text-gray-800 rounded-2xl rounded-bl-md px-4 py-3 shadow-md border-2 border-gray-300">
+                <div className="bg-[#1a1a1a] rounded-2xl rounded-bl-md px-4 py-3 shadow-md border border-[#2a2a2a]">
                   <div className="flex gap-1">
                     <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
                     <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
@@ -275,20 +273,20 @@ export default function ChatWidget() {
           </div>
 
           {/* Input Area */}
-          <div className="p-4 border-t-2 border-gray-300 bg-gray-50 flex gap-2">
+          <div className="p-4 border-t border-[#1a1a1a] bg-[#0a0a0a] flex gap-2">
             <input
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSend()}
               placeholder="Ketik pesan..."
-              className="flex-1 px-4 py-2.5 border-2 border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-all bg-white"
+              className="flex-1 px-4 py-2.5 border border-[#2a2a2a] rounded-full focus:outline-none focus:ring-1 focus:ring-white transition-all bg-[#0a0a0a] text-white placeholder-gray-600"
               disabled={isTyping}
             />
             <button
               onClick={handleSend}
               disabled={isTyping || !inputValue.trim()}
-              className="bg-gradient-to-br from-gray-700 to-gray-900 text-white px-5 py-2.5 rounded-full hover:from-gray-600 hover:to-gray-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl border-2 border-gray-600 hover:scale-105"
+              className="bg-[#f5f5f5] text-black px-5 py-2.5 rounded-full hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
               aria-label="Send message"
             >
               <span className="text-lg">➤</span>
@@ -298,15 +296,27 @@ export default function ChatWidget() {
       )}
 
       {/* Floating Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-br from-gray-700 to-gray-900 text-white rounded-full shadow-2xl hover:scale-110 transition-all duration-300 flex items-center justify-center text-3xl z-50 border-2 border-gray-500 hover:border-gray-400 hover:shadow-gray-500/50"
-        aria-label={isOpen ? 'Close chat' : 'Open chat'}
-      >
-        <span className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
-          {isOpen ? '✕' : '💬'}
-        </span>
-      </button>
+      {/* Floating Button */}
+      {!isOpen && (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="fixed bottom-6 right-6 flex items-center gap-3 px-4 py-3 bg-black/80 backdrop-blur-md border border-white/10 rounded-full shadow-lg hover:border-white/30 hover:shadow-white/10 transition-all group z-50"
+          aria-label="Open chat"
+        >
+          <div className="relative">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white/70 group-hover:text-white transition-colors">
+              <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>
+            </svg>
+            <span className="absolute -top-1 -right-1 flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+            </span>
+          </div>
+          <span className="text-sm font-mono uppercase tracking-widest text-white/70 group-hover:text-white hidden sm:block">
+            Ask AI
+          </span>
+        </button>
+      )}
 
       {/* Custom animations */}
       <style jsx>{`
