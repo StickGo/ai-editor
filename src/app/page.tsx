@@ -102,13 +102,13 @@ export default function Home() {
             </h1>
             
             <div className="flex flex-wrap justify-center gap-6 text-[var(--foreground)]/70 text-lg md:text-2xl font-light uppercase tracking-[0.3em] mt-4 mb-12">
-              <span className="hover:text-[var(--color-medium)] transition-colors cursor-default">Web</span>
-              <span className="opacity-30">•</span>
-              <span className="hover:text-[var(--color-medium)] transition-colors cursor-default">Game</span>
-              <span className="opacity-30">•</span>
-              <span className="hover:text-[var(--color-medium)] transition-colors cursor-default">App</span>
-              <span className="opacity-30">•</span>
-              <span className="hover:text-[var(--color-medium)] transition-colors cursor-default">Music</span>
+              <span className="hover:text-[var(--color-medium)] transition-colors cursor-default text-white/80">Web</span>
+              <span className="text-white/50">•</span>
+              <span className="hover:text-[var(--color-medium)] transition-colors cursor-default text-white/80">Game</span>
+              <span className="text-white/50">•</span>
+              <span className="hover:text-[var(--color-medium)] transition-colors cursor-default text-white/80">App</span>
+              <span className="text-white/50">•</span>
+              <span className="hover:text-[var(--color-medium)] transition-colors cursor-default text-white/80">Music</span>
             </div>
 
             {/* SOCIALS - Minimalist &Centered */}
@@ -145,7 +145,7 @@ export default function Home() {
                  <div className="p-3 rounded-full border border-[var(--foreground)]/10 group-hover:border-[var(--foreground)]/50 group-hover:scale-110 transition-all duration-300">
                     <Mail className="w-5 h-5" />
                  </div>
-                 <span className="text-[10px] uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-300">Email</span>
+                 <span className="text-[10px] uppercase tracking-widest text-[var(--foreground)]/80 group-hover:text-[var(--foreground)] transition-opacity duration-300">Email</span>
                </a>
             </div>
 
@@ -213,22 +213,22 @@ export default function Home() {
                 className="space-y-8 md:col-span-3"
               >
                 <div className="border-l-4 border-white/30 pl-8">
-                  <p className="text-lg md:text-xl leading-relaxed text-[var(--color-light)]/80 font-light">
-                    {PORTFOLIO_DATA.identity.bio}
-                  </p>
+                   <p className="text-lg md:text-xl leading-relaxed text-zinc-300 font-light">
+                     {PORTFOLIO_DATA.identity.bio}
+                   </p>
                 </div>
                 
                 {/* Stats or Tags */}
                 <div className="flex flex-wrap gap-3 pt-4">
-                  <span className="px-4 py-2 bg-white/5 border border-white/10 text-sm font-mono text-white/70 hover:bg-white/10 transition-colors">
-                    Developer
-                  </span>
-                  <span className="px-4 py-2 bg-white/5 border border-white/10 text-sm font-mono text-white/70 hover:bg-white/10 transition-colors">
-                    Musician
-                  </span>
-                  <span className="px-4 py-2 bg-white/5 border border-white/10 text-sm font-mono text-white/70 hover:bg-white/10 transition-colors">
-                    Creator
-                  </span>
+                   <span className="px-4 py-2 bg-white/5 border border-white/10 text-sm font-mono text-zinc-300 hover:bg-white/10 transition-colors">
+                     Developer
+                   </span>
+                   <span className="px-4 py-2 bg-white/5 border border-white/10 text-sm font-mono text-zinc-300 hover:bg-white/10 transition-colors">
+                     Musician
+                   </span>
+                   <span className="px-4 py-2 bg-white/5 border border-white/10 text-sm font-mono text-zinc-300 hover:bg-white/10 transition-colors">
+                     Creator
+                   </span>
                 </div>
               </motion.div>
             </div>
@@ -246,9 +246,9 @@ export default function Home() {
                     My<br/>Journey
                   </h2>
                   <div className="hidden md:block w-full h-[1px] bg-[var(--foreground)]/20 my-6" />
-                  <p className="text-[var(--foreground)]/50 italic text-sm">
-                    "Every step is a lesson, every milestone a memory."
-                  </p>
+                   <p className="text-zinc-400 italic text-sm">
+                     "Every step is a lesson, every milestone a memory."
+                   </p>
                 </div>
              </div>
 
@@ -288,11 +288,11 @@ export default function Home() {
                      <h3 className="text-3xl font-bold text-white mb-2 group-hover:tracking-wider transition-all duration-500">
                        {item.role}
                      </h3>
-                     <h4 className="text-xl text-white/40 font-serif italic mb-6">
+                      <h4 className="text-xl text-zinc-400 font-serif italic mb-6">
                        @ {item.company}
                      </h4>
                      
-                     <p className="text-white/60 leading-relaxed text-lg font-light tracking-wide max-w-2xl">
+                     <p className="text-zinc-300 leading-relaxed text-lg font-light tracking-wide max-w-2xl">
                         {item.description}
                      </p>
                   </motion.div>
@@ -321,7 +321,7 @@ export default function Home() {
                    className={`px-6 py-2 rounded-full text-xs font-mono tracking-widest uppercase transition-all duration-500 border ${
                      activeTab === cat 
                        ? "bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.3)]" 
-                       : "bg-transparent text-white/40 border-white/5 hover:border-white/20 hover:text-white"
+                       : "bg-transparent text-zinc-400 border-white/10 hover:border-white/20 hover:text-white"
                    }`}
                  >
                    {cat}
@@ -362,9 +362,9 @@ export default function Home() {
                          <h3 className="text-2xl md:text-4xl font-bold font-heading mb-3 text-white">
                            {project.title}
                          </h3>
-                         <p className="text-white/70 md:text-white/60 text-xs md:text-base mb-4 md:mb-6 line-clamp-2 md:line-clamp-none font-light tracking-wide max-w-md opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-700 delay-100 italic">
-                           {project.description}
-                         </p>
+                          <p className="text-zinc-300 md:text-white/80 text-xs md:text-base mb-4 md:mb-6 line-clamp-2 md:line-clamp-none font-light tracking-wide max-w-md opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-700 delay-100 italic">
+                            {project.description}
+                          </p>
                          
                          {/* View Project Indicator */}
                          <div className="flex items-center gap-2 text-white group-hover:text-white transition-colors duration-500 font-mono text-[10px] md:text-xs uppercase tracking-[0.3em] opacity-100 md:opacity-0 md:group-hover:opacity-100 transform translate-x-0 md:translate-x-4 md:group-hover:translate-x-0 delay-200">
@@ -392,7 +392,7 @@ export default function Home() {
              className="mb-16 text-center"
           >
              <h2 className="text-4xl md:text-6xl font-bold font-heading mb-4 text-white">Expertise</h2>
-             <p className="text-white/60 font-mono text-xs uppercase tracking-widest">Solutions I provide</p>
+             <p className="text-zinc-400 font-mono text-xs uppercase tracking-widest">Solutions I provide</p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -417,7 +417,7 @@ export default function Home() {
                 </div>
                 
                 <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-[var(--color-medium)] transition-colors">{service.title}</h3>
-                <p className="text-white/50 text-base leading-relaxed font-light">{service.description}</p>
+                <p className="text-zinc-300 text-base leading-relaxed font-light">{service.description}</p>
                 
                 {/* Hover Line */}
                 <div className="absolute bottom-0 left-0 h-1 bg-[var(--color-medium)] w-0 group-hover:w-full transition-all duration-500" />
@@ -451,16 +451,16 @@ export default function Home() {
                  className="relative p-10 border border-white/5 bg-[var(--color-dark)] hover:border-white/10 transition-colors group"
                >
                  <div className="text-6xl text-[var(--color-medium)] opacity-20 font-serif absolute top-4 left-6 group-hover:opacity-40 transition-opacity">“</div>
-                 <p className="text-white/70 italic mb-8 relative z-10 font-light text-lg leading-relaxed">
-                   {testimoni.quote}
-                 </p>
+                  <p className="text-zinc-300 italic mb-8 relative z-10 font-light text-lg leading-relaxed">
+                    {testimoni.quote}
+                  </p>
                  <div className="flex items-center gap-4 border-t border-white/5 pt-6">
                    <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center font-bold text-white/50 border border-white/10 group-hover:bg-[var(--color-medium)] group-hover:text-black transition-colors">
                      {testimoni.name.charAt(0)}
                    </div>
                    <div>
                      <div className="font-bold text-white text-sm tracking-wide">{testimoni.name}</div>
-                     <div className="text-[10px] text-white/40 uppercase tracking-[0.2em]">{testimoni.role}</div>
+                      <div className="text-[10px] text-zinc-400 uppercase tracking-[0.2em]">{testimoni.role}</div>
                    </div>
                  </div>
                </motion.div>
@@ -479,7 +479,7 @@ export default function Home() {
            >
              <h2 className="text-4xl md:text-6xl font-bold font-heading mb-6 text-white">Let's Create Together</h2>
                <div className="flex flex-col items-center gap-12 mt-12">
-                <p className="text-white/80 text-lg font-light max-w-lg mx-auto">
+                <p className="text-zinc-200 text-lg font-light max-w-lg mx-auto">
                   Tertarik berkolaborasi dalam proyek Game, Web, atau Musik? Jangan ragu untuk menghubungi saya.
                 </p>
 
@@ -526,7 +526,7 @@ export default function Home() {
       <BottomNav />
 
       {/* FOOTER */}
-      <footer className="relative z-20 border-t border-white/5 py-12 text-center text-white/20 text-xs font-mono uppercase tracking-widest">
+      <footer className="relative z-20 border-t border-white/5 py-12 text-center text-zinc-400 text-xs font-mono uppercase tracking-widest">
         <p>&copy; 2026 Agil Faqih Ijsam.</p>
       </footer>
     </div>
