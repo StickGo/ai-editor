@@ -43,6 +43,7 @@ jobs:
           fi
           echo "✅ All Vercel secrets are configured."
 
+
       - name: Pull Vercel Environment Information
         run: |
           if [ "${{ github.ref }}" == "refs/heads/main" ]; then
@@ -53,6 +54,9 @@ jobs:
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Clean Previous Build Output
+        run: rm -rf .vercel/output
 
       - name: Build Project Artifacts
         run: |
