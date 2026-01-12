@@ -117,7 +117,7 @@ export default function Home() {
                  href={PORTFOLIO_DATA.identity.social.github} 
                  target="_blank" 
                  rel="noopener noreferrer" 
-                 className="group flex flex-col items-center gap-2 text-[var(--foreground)]/50 hover:text-[var(--foreground)] transition-colors"
+                 className="group flex flex-col items-center gap-2 text-[var(--foreground)]/70 hover:text-[var(--foreground)] transition-colors"
                  aria-label="GitHub Profile"
                 >
                  <div className="p-3 rounded-full border border-[var(--foreground)]/10 group-hover:border-[var(--foreground)]/50 group-hover:scale-110 transition-all duration-300">
@@ -129,7 +129,7 @@ export default function Home() {
                  href={PORTFOLIO_DATA.identity.social.instagram} 
                  target="_blank" 
                  rel="noopener noreferrer" 
-                 className="group flex flex-col items-center gap-2 text-[var(--foreground)]/50 hover:text-[var(--foreground)] transition-colors"
+                 className="group flex flex-col items-center gap-2 text-[var(--foreground)]/70 hover:text-[var(--foreground)] transition-colors"
                  aria-label="Instagram Profile"
                 >
                  <div className="p-3 rounded-full border border-[var(--foreground)]/10 group-hover:border-[var(--foreground)]/50 group-hover:scale-110 transition-all duration-300">
@@ -139,7 +139,7 @@ export default function Home() {
                </a>
                <a 
                  href={`mailto:${PORTFOLIO_DATA.identity.email}`} 
-                 className="group flex flex-col items-center gap-2 text-[var(--foreground)]/50 hover:text-[var(--foreground)] transition-colors"
+                 className="group flex flex-col items-center gap-2 text-[var(--foreground)]/70 hover:text-[var(--foreground)] transition-colors"
                  aria-label="Email Contact"
                 >
                  <div className="p-3 rounded-full border border-[var(--foreground)]/10 group-hover:border-[var(--foreground)]/50 group-hover:scale-110 transition-all duration-300">
@@ -392,7 +392,7 @@ export default function Home() {
              className="mb-16 text-center"
           >
              <h2 className="text-4xl md:text-6xl font-bold font-heading mb-4 text-white">Expertise</h2>
-             <p className="text-white/40 font-mono text-xs uppercase tracking-widest">Solutions I provide</p>
+             <p className="text-white/60 font-mono text-xs uppercase tracking-widest">Solutions I provide</p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -479,7 +479,7 @@ export default function Home() {
            >
              <h2 className="text-4xl md:text-6xl font-bold font-heading mb-6 text-white">Let's Create Together</h2>
                <div className="flex flex-col items-center gap-12 mt-12">
-                <p className="text-white/60 text-lg font-light max-w-lg mx-auto">
+                <p className="text-white/80 text-lg font-light max-w-lg mx-auto">
                   Tertarik berkolaborasi dalam proyek Game, Web, atau Musik? Jangan ragu untuk menghubungi saya.
                 </p>
 

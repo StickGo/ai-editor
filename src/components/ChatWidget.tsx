@@ -249,20 +249,20 @@ export default function ChatWidget() {
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                <button onClick={() => setShowGallery(!showGallery)} className={`p-2 hover:bg-white/5 rounded-full transition-colors ${showGallery ? 'text-white bg-white/10' : 'text-white/40 hover:text-white'}`} title="Gallery" aria-label="Toggle Gallery">
+                <button onClick={() => setShowGallery(!showGallery)} className={`p-2 hover:bg-white/5 rounded-full transition-colors ${showGallery ? 'text-white bg-white/10' : 'text-white/60 hover:text-white'}`} title="Gallery" aria-label="Toggle Gallery">
                   <Grid className="w-4 h-4" />
                 </button>
                 <div className="w-px h-4 bg-white/10 mx-1" />
-                <button onClick={handleDownload} className="p-2 hover:bg-white/5 rounded-full text-white/40 hover:text-white transition-colors" title="Download Chat" aria-label="Download Chat">
+                <button onClick={handleDownload} className="p-2 hover:bg-white/5 rounded-full text-white/60 hover:text-white transition-colors" title="Download Chat" aria-label="Download Chat">
                   <Download className="w-4 h-4" />
                 </button>
-                <button onClick={handleClearHistory} className="p-2 hover:bg-white/5 rounded-full text-white/40 hover:text-red-400 transition-colors" title="Clear Chat" aria-label="Clear Chat History">
+                <button onClick={handleClearHistory} className="p-2 hover:bg-white/5 rounded-full text-white/60 hover:text-red-400 transition-colors" title="Clear Chat" aria-label="Clear Chat History">
                   <Trash2 className="w-4 h-4" />
                 </button>
-                <button onClick={() => setIsFullscreen(!isFullscreen)} className="p-2 hover:bg-white/5 rounded-full text-white/40 hover:text-white transition-colors" aria-label={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}>
+                <button onClick={() => setIsFullscreen(!isFullscreen)} className="p-2 hover:bg-white/5 rounded-full text-white/60 hover:text-white transition-colors" aria-label={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}>
                   {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
                 </button>
-                <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-red-500/10 rounded-full text-white/40 hover:text-red-500 transition-colors" aria-label="Close Chat">
+                <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-red-500/10 rounded-full text-white/60 hover:text-red-500 transition-colors" aria-label="Close Chat">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -282,7 +282,7 @@ export default function ChatWidget() {
                     <ImageIcon className="w-4 h-4 text-[#1DB954]" />
                     Galeri Gambar
                   </h3>
-                  <span className="text-xs text-white/40">
+                  <span className="text-xs text-white/60">
                     {messages.filter(m => m.image).length} gambar
                   </span>
                 </div>
@@ -455,7 +455,7 @@ export default function ChatWidget() {
                               </button>
                             </div>
                           </div>
-                          <p className="text-[9px] text-white/40 italic px-1">
+                          <p className="text-[9px] text-white/60 italic px-1">
                             Klik gambar untuk memperbesar
                           </p>
                         </div>
@@ -511,7 +511,7 @@ export default function ChatWidget() {
                     </div>
                   </div>
                   <div className="flex items-center">
-                    <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">
+                    <span className="text-[10px] text-white/60 uppercase tracking-widest font-bold">
                       {isGeneratingImage ? 'Faqih AI sedang melukis...' : 'Faqih AI sedang mengetik...'}
                     </span>
                   </div>
