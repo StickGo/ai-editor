@@ -1,6 +1,8 @@
 import { AuthProvider } from '@/components/AuthProvider'
 import './editor.css'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = {
   title: 'AI Document Editor | Gemini & Supabase',
   description: 'Collaborative document editor with AI assistant powered by Gemini',
