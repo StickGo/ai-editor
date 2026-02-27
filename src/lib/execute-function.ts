@@ -1,6 +1,34 @@
+// ─── Types for function call arguments ──────────────────────
+interface UpdateByLineArgs {
+  start_line: number
+  end_line: number
+  new_content: string
+}
+
+interface UpdateByReplaceArgs {
+  old_string: string
+  new_string: string
+  occurrence: 'first' | 'last' | 'all'
+}
+
+interface InsertAtLineArgs {
+  line_number: number
+  content: string
+  position: 'before' | 'after'
+}
+
+interface DeleteLinesArgs {
+  start_line: number
+  end_line: number
+}
+
+interface AppendArgs {
+  content: string
+}
+
 export function executeFunctionCall(
   functionName: string,
-  args: any,
+  args: Record<string, unknown>,
   currentContent: string
 ): { success: boolean; newContent?: string; error?: string } {
   try {
@@ -8,7 +36,7 @@ export function executeFunctionCall(
 
     switch (functionName) {
       case 'update_doc_by_line': {
-        const { start_line, end_line, new_content } = args
+        const { start_line, end_line, new_content } = args as unknown as UpdateByLineArgs
 
         if (start_line < 1 || end_line > lines.length || start_line > end_line) {
           return {
@@ -27,7 +55,7 @@ export function executeFunctionCall(
       }
 
       case 'update_doc_by_replace': {
-        const { old_string, new_string, occurrence } = args
+        const { old_string, new_string, occurrence } = args as unknown as UpdateByReplaceArgs
 
         if (!currentContent.includes(old_string)) {
           return { success: false, error: `Text "${old_string}" not found in document` }
@@ -49,7 +77,7 @@ export function executeFunctionCall(
       }
 
       case 'insert_at_line': {
-        const { line_number, content, position } = args
+        const { line_number, content, position } = args as unknown as InsertAtLineArgs
 
         if (line_number < 1 || line_number > lines.length) {
           return {
@@ -69,7 +97,7 @@ export function executeFunctionCall(
       }
 
       case 'delete_lines': {
-        const { start_line, end_line } = args
+        const { start_line, end_line } = args as unknown as DeleteLinesArgs
 
         if (start_line < 1 || end_line > lines.length || start_line > end_line) {
           return {
@@ -87,7 +115,7 @@ export function executeFunctionCall(
       }
 
       case 'append_to_document': {
-        const { content } = args
+        const { content } = args as unknown as AppendArgs
         const newContent = currentContent.length > 0
           ? currentContent + '\n' + content
           : content
@@ -97,7 +125,7 @@ export function executeFunctionCall(
       default:
         return { success: false, error: `Unknown function: ${functionName}` }
     }
-  } catch (error: any) {
-    return { success: false, error: error.message }
+  } catch (error: unknown) {
+    return { success: false, error: error instanceof Error ? error.message : String(error) }
   }
 }

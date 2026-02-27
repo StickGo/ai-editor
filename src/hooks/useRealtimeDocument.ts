@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
+import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js'
 
 export function useRealtimeDocument(
   documentId: string | null,
@@ -20,8 +21,9 @@ export function useRealtimeDocument(
           table: 'documents',
           filter: `id=eq.${documentId}`
         },
-        (payload: any) => {
-          onUpdate(payload.new.content)
+        (payload: RealtimePostgresChangesPayload<{ content: string }>) => {
+          const newRecord = payload.new as { content: string }
+          onUpdate(newRecord.content)
         }
       )
       .subscribe()

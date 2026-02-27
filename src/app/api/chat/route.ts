@@ -1,5 +1,5 @@
 import { generateImage } from '@/lib/image-generator'
-import { GoogleGenAI, Type } from '@google/genai'
+import { GoogleGenAI, Type, type Part } from '@google/genai'
 import { NextRequest, NextResponse } from 'next/server'
 
 // Inisialisasi Gemini AI
@@ -80,11 +80,11 @@ export async function POST(request: NextRequest) {
     })) || []
 
     // Tambahkan pesan user terbaru dengan opsional gambar
-    const userParts: any[] = [{ text: message }];
+    const userParts: Part[] = [{ text: message }];
     if (image && mimeType) {
       userParts.push({
-        inline_data: {
-          mime_type: mimeType,
+        inlineData: {
+          mimeType: mimeType,
           data: image
         }
       });
@@ -176,8 +176,8 @@ export async function POST(request: NextRequest) {
         },
       });
 
-    } catch (geminiError: any) {
-      const errorMsg = geminiError?.message || String(geminiError);
+    } catch (geminiError: unknown) {
+      const errorMsg = geminiError instanceof Error ? geminiError.message : String(geminiError);
       console.error('Gemini Failure details:', errorMsg);
       
       // Check for quota limit explicitly

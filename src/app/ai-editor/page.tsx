@@ -4,29 +4,29 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import { Panel, Group as PanelGroup, Separator as PanelResizeHandle } from 'react-resizable-panels'
 import DocumentEditor from '@/components/DocumentEditor'
 import AIChat from '@/components/AIChat'
+import { DocsSidebar } from '@/components/DocsSidebar'
+import { VersionTimeline } from '@/components/VersionTimeline'
+import { DiffModal } from '@/components/DiffModal'
 import { useAuth } from '@/components/AuthProvider'
 import { supabase } from '@/lib/supabase/client'
 import { useAutoSave } from '@/hooks/useAutoSave'
+import { useAutoSnapshot } from '@/hooks/useAutoSnapshot'
 import { useRealtimeDocument } from '@/hooks/useRealtimeDocument'
+import { getDocument, renameDocument, type DocumentSummary } from '@/lib/documents'
 import {
   FileText,
-  Plus,
-  Trash2,
   Undo2,
   Redo2,
   Download,
   LogOut,
-  ArrowLeft,
-  Loader2
+  Share2,
+  Loader2,
+  PanelLeftClose,
+  PanelLeft,
+  Save,
+  History,
+  Pencil,
 } from 'lucide-react'
-
-interface Document {
-  id: string
-  title: string
-  content: string
-  created_at: string
-  updated_at: string
-}
 
 // ─── Undo/Redo Hook ─────────────────────────────────────────
 function useUndoRedo(initial: string) {
@@ -44,7 +44,6 @@ function useUndoRedo(initial: string) {
     setHistory(prev => {
       const newHistory = prev.slice(0, index + 1)
       newHistory.push(value)
-      // Cap history at 100 entries
       if (newHistory.length > 100) newHistory.shift()
       return newHistory
     })
@@ -94,8 +93,8 @@ function AuthForm() {
         const { error } = await supabase.auth.signUp({ email, password })
         if (error) throw error
       }
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err))
     } finally {
       setLoading(false)
     }
@@ -147,80 +146,17 @@ function AuthForm() {
   )
 }
 
-// ─── Document List ───────────────────────────────────────────
-function DocumentList({
-  documents,
-  onSelect,
-  onCreate,
-  onDelete,
-  loading
-}: {
-  documents: Document[]
-  onSelect: (doc: Document) => void
-  onCreate: () => void
-  onDelete: (id: string) => void
-  loading: boolean
-}) {
-  return (
-    <div className="doclist-page">
-      <div className="doclist-container">
-        <div className="doclist-header">
-          <h1 className="doclist-title">
-            <FileText size={18} strokeWidth={1.5} />
-            Documents
-          </h1>
-          <button className="doclist-new-btn" onClick={onCreate}>
-            + New Document
-          </button>
-        </div>
-
-        {loading ? (
-          <div className="doclist-loading">
-            <Loader2 size={16} style={{ display: 'inline', marginRight: 8, animation: 'spin 1s linear infinite' }} />
-            Loading...
-          </div>
-        ) : documents.length === 0 ? (
-          <div className="doclist-empty">
-            <div className="doclist-empty-icon">
-              <FileText size={24} strokeWidth={1} />
-            </div>
-            <p>No documents yet</p>
-            <button className="doclist-new-btn" onClick={onCreate}>
-              Create your first document
-            </button>
-          </div>
-        ) : (
-          <div className="doclist-grid">
-            {documents.map(doc => (
-              <div key={doc.id} className="doclist-card" onClick={() => onSelect(doc)}>
-                <div className="doclist-card-title">{doc.title}</div>
-                <div className="doclist-card-preview">
-                  {doc.content.slice(0, 120) || '(empty)'}
-                </div>
-                <div className="doclist-card-footer">
-                  <span>{new Date(doc.updated_at).toLocaleDateString()}</span>
-                  <button
-                    className="doclist-card-delete"
-                    onClick={(e) => { e.stopPropagation(); onDelete(doc.id) }}
-                  >
-                    <Trash2 size={13} strokeWidth={1.5} />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
 // ─── Main Editor Page ────────────────────────────────────────
 export default function EditorPage() {
   const { user, loading: authLoading } = useAuth()
-  const [documents, setDocuments] = useState<Document[]>([])
-  const [activeDoc, setActiveDoc] = useState<Document | null>(null)
-  const [docsLoading, setDocsLoading] = useState(true)
+  const [activeDocId, setActiveDocId] = useState<string | null>(null)
+  const [activeDocTitle, setActiveDocTitle] = useState<string>('')
+  const [docLoading, setDocLoading] = useState(false)
+  const [isRenaming, setIsRenaming] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [showShareDialog, setShowShareDialog] = useState(false)
+  const [showHistory, setShowHistory] = useState(false)
+  const [compareVersions, setCompareVersions] = useState<{ a: string; b: string } | null>(null)
 
   // Undo/Redo
   const {
@@ -230,62 +166,45 @@ export default function EditorPage() {
     canUndo, canRedo
   } = useUndoRedo('')
 
-  // Auto-save
-  useAutoSave(activeDoc?.id ?? null, documentContent)
+  // Auto-save with status
+  const { saveStatus, saveNow } = useAutoSave(activeDocId, documentContent)
+
+  // Auto-snapshot (every 30s)
+  const { saveNamedVersion } = useAutoSnapshot({
+    documentId: activeDocId,
+    content: documentContent,
+    userId: user?.id ?? '',
+  })
 
   // Realtime
   const handleRealtimeUpdate = useCallback((content: string) => {
     pushHistory(content)
   }, [pushHistory])
-  useRealtimeDocument(activeDoc?.id ?? null, handleRealtimeUpdate)
+  useRealtimeDocument(activeDocId, handleRealtimeUpdate)
 
-  // Load documents
-  useEffect(() => {
-    if (!user) return
-    loadDocuments()
-  }, [user])
-
-  async function loadDocuments() {
-    setDocsLoading(true)
-    const { data, error } = await supabase
-      .from('documents')
-      .select('*')
-      .order('updated_at', { ascending: false })
-
-    if (!error && data) {
-      setDocuments(data)
-    }
-    setDocsLoading(false)
-  }
-
-  async function createDocument() {
-    if (!user) return
-    const title = prompt('Document title:') || 'Untitled'
-    const { data, error } = await supabase
-      .from('documents')
-      .insert({ title, content: '', user_id: user.id })
-      .select()
-      .single()
-
-    if (!error && data) {
-      setDocuments(prev => [data, ...prev])
-      openDocument(data)
+  // ── Open document ─────────────────────────────────────────
+  async function handleDocumentSelect(doc: DocumentSummary) {
+    if (doc.id === activeDocId) return
+    setDocLoading(true)
+    try {
+      const fullDoc = await getDocument(doc.id)
+      setActiveDocId(fullDoc.id)
+      setActiveDocTitle(fullDoc.title)
+      resetHistory(fullDoc.content)
+    } catch (err) {
+      console.error('Failed to open document:', err)
+    } finally {
+      setDocLoading(false)
     }
   }
 
-  async function deleteDocument(id: string) {
-    if (!confirm('Delete this document?')) return
-    await supabase.from('documents').delete().eq('id', id)
-    setDocuments(prev => prev.filter(d => d.id !== id))
-    if (activeDoc?.id === id) {
-      setActiveDoc(null)
+  // ── Handle document delete ────────────────────────────────
+  function handleDocumentDelete(deletedId: string) {
+    if (deletedId === activeDocId) {
+      setActiveDocId(null)
+      setActiveDocTitle('')
       resetHistory('')
     }
-  }
-
-  function openDocument(doc: Document) {
-    setActiveDoc(doc)
-    resetHistory(doc.content)
   }
 
   function handleContentChange(newContent: string) {
@@ -297,12 +216,12 @@ export default function EditorPage() {
   }
 
   function downloadDocument() {
-    if (!activeDoc) return
+    if (!activeDocId) return
     const blob = new Blob([documentContent], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${activeDoc.title}.txt`
+    a.download = `${activeDocTitle || 'document'}.txt`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -341,59 +260,112 @@ export default function EditorPage() {
     return <AuthForm />
   }
 
-  // No active doc → show list
-  if (!activeDoc) {
-    return (
-      <div className="ai-editor-root">
-        <div className="topbar">
-          <div className="topbar-left">
-            <span className="topbar-brand">AI Editor</span>
-          </div>
-          <div className="topbar-right">
-            <span className="topbar-email">{user.email}</span>
-            <button className="topbar-btn" onClick={handleSignOut}>
-              <LogOut size={12} strokeWidth={1.5} />
-              Sign Out
-            </button>
-          </div>
-        </div>
-        <DocumentList
-          documents={documents}
-          onSelect={openDocument}
-          onCreate={createDocument}
-          onDelete={deleteDocument}
-          loading={docsLoading}
-        />
-      </div>
-    )
-  }
+  // Lazy-load ShareDialog
+  const ShareDialog = showShareDialog
+    ? require('@/components/ShareDialog').ShareDialog
+    : null
 
-  // Active doc → two-panel editor
   return (
     <div className="ai-editor-root">
       {/* Top Bar */}
       <div className="topbar">
         <div className="topbar-left">
-          <button className="topbar-btn" onClick={() => setActiveDoc(null)}>
-            <ArrowLeft size={12} strokeWidth={1.5} />
-            Back
+          <button
+            className="topbar-btn"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            title={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
+          >
+            {sidebarOpen
+              ? <PanelLeftClose size={12} strokeWidth={1.5} />
+              : <PanelLeft size={12} strokeWidth={1.5} />
+            }
           </button>
-          <span className="topbar-doctitle">{activeDoc.title}</span>
+          <span className="topbar-brand">AI Editor</span>
+          {activeDocId && (
+            <>
+              <span className="topbar-separator">/</span>
+              <span
+                className={`topbar-doctitle ${isRenaming ? 'renaming' : ''}`}
+                title="Klik untuk ganti nama"
+                onClick={async () => {
+                  const newTitle = prompt('Ganti nama dokumen:', activeDocTitle)
+                  if (!newTitle || newTitle === activeDocTitle) return
+                  try {
+                    setIsRenaming(true)
+                    await renameDocument(activeDocId, newTitle)
+                    setActiveDocTitle(newTitle)
+                  } catch (err: any) {
+                    alert(`Gagal mengganti nama: ${err.message || 'Error tidak diketahui'}`)
+                  } finally {
+                    setIsRenaming(false)
+                  }
+                }}
+              >
+                {isRenaming ? '...' : activeDocTitle}
+                <Pencil size={10} strokeWidth={1.5} style={{ marginLeft: 6, opacity: 0.5 }} />
+              </span>
+              {/* Auto-save Status Indicator */}
+              <span className={`topbar-save-status topbar-save-status--${saveStatus}`}>
+                {saveStatus === 'saving' && (
+                  <><span className="topbar-save-dot saving" />Menyimpan...</>
+                )}
+                {saveStatus === 'saved' && (
+                  <><span className="topbar-save-dot saved" />Tersimpan</>
+                )}
+                {saveStatus === 'error' && (
+                  <><span className="topbar-save-dot error" />Gagal simpan</>
+                )}
+              </span>
+            </>
+          )}
         </div>
-        <div className="topbar-actions">
-          <button className="topbar-btn" onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)">
-            <Undo2 size={12} strokeWidth={1.5} />
-            Undo
-          </button>
-          <button className="topbar-btn" onClick={redo} disabled={!canRedo} title="Redo (Ctrl+Y)">
-            <Redo2 size={12} strokeWidth={1.5} />
-            Redo
-          </button>
-          <button className="topbar-btn" onClick={downloadDocument} title="Download">
-            <Download size={12} strokeWidth={1.5} />
-            Export
-          </button>
-        </div>
+
+        {activeDocId && (
+          <div className="topbar-actions">
+            <button className="topbar-btn" onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)">
+              <Undo2 size={12} strokeWidth={1.5} />
+              Undo
+            </button>
+            <button className="topbar-btn" onClick={redo} disabled={!canRedo} title="Redo (Ctrl+Y)">
+              <Redo2 size={12} strokeWidth={1.5} />
+              Redo
+            </button>
+            <button className="topbar-btn" onClick={downloadDocument} title="Download">
+              <Download size={12} strokeWidth={1.5} />
+              Export
+            </button>
+            <button className="topbar-btn" onClick={() => setShowShareDialog(true)} title="Share">
+              <Share2 size={12} strokeWidth={1.5} />
+              Share
+            </button>
+            {/* Save (immediate) */}
+            <button
+              className="topbar-btn topbar-btn-primary"
+              onClick={async () => {
+                try {
+                  await saveNow()
+                  alert('Dokumen berhasil disimpan!')
+                } catch (err: any) {
+                  alert(`Gagal simpan: ${err.message || 'Error'}`)
+                }
+              }}
+              title="Save (Ctrl+S)"
+            >
+              <Save size={12} strokeWidth={1.5} />
+              Save
+            </button>
+
+            <button
+              className={`topbar-btn ${showHistory ? 'topbar-btn-active' : ''}`}
+              onClick={() => setShowHistory(!showHistory)}
+              title="Version History"
+            >
+              <History size={12} strokeWidth={1.5} />
+              History
+            </button>
+          </div>
+        )}
+
         <div className="topbar-right">
           <span className="topbar-email">{user.email}</span>
           <button className="topbar-btn" onClick={handleSignOut}>
@@ -403,26 +375,97 @@ export default function EditorPage() {
         </div>
       </div>
 
-      {/* Two Panel Layout */}
-      <div className="panels-wrapper">
-        <PanelGroup orientation="horizontal">
-          <Panel id="editor" defaultSize={50} minSize={30}>
-            <DocumentEditor
-              content={documentContent}
-              onChange={handleContentChange}
+      {/* Main Content */}
+      <div className="main-layout">
+        {/* Sidebar */}
+        {sidebarOpen && (
+          <div className="sidebar-container">
+            <DocsSidebar
+              userId={user.id}
+              activeDocumentId={activeDocId}
+              onDocumentSelect={handleDocumentSelect}
+              onDocumentDelete={handleDocumentDelete}
             />
-          </Panel>
+          </div>
+        )}
 
-          <PanelResizeHandle className="panel-resize-handle" />
+        {/* Editor + Chat */}
+        <div className="editor-area">
+          {docLoading ? (
+            <div className="editor-loading">
+              <Loader2 size={20} strokeWidth={1.5} className="sidebar-spinner" />
+              <span>Loading document...</span>
+            </div>
+          ) : activeDocId ? (
+            <div className="panels-wrapper" key={activeDocId}>
+              <PanelGroup orientation="horizontal">
+                <Panel id="editor" defaultSize={50} minSize={30}>
+                  <DocumentEditor
+                    content={documentContent}
+                    onChange={handleContentChange}
+                  />
+                </Panel>
 
-          <Panel id="chat" defaultSize={50} minSize={30}>
-            <AIChat
-              documentContent={documentContent}
-              onDocumentUpdate={handleAIUpdate}
+                <PanelResizeHandle className="panel-resize-handle" />
+
+                <Panel id="chat" defaultSize={50} minSize={30}>
+                  <AIChat
+                    documentContent={documentContent}
+                    onDocumentUpdate={handleAIUpdate}
+                  />
+                </Panel>
+              </PanelGroup>
+            </div>
+          ) : (
+            <div className="editor-empty">
+              <FileText size={32} strokeWidth={1} style={{ opacity: 0.15 }} />
+              <p className="editor-empty-title">No Document Selected</p>
+              <p className="editor-empty-desc">
+                Select a document from the sidebar or create a new one to start editing.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Version History Sidebar */}
+        {showHistory && activeDocId && (
+          <div className="history-sidebar">
+            <VersionTimeline
+              documentId={activeDocId}
+              userId={user.id}
+              onCompare={(a, b) => {
+                setCompareVersions({ a, b })
+              }}
+              onContentRestore={async () => {
+                try {
+                  const fresh = await getDocument(activeDocId)
+                  resetHistory(fresh.content)
+                } catch (err) {
+                  console.error('Failed to reload after restore:', err)
+                }
+              }}
             />
-          </Panel>
-        </PanelGroup>
+          </div>
+        )}
       </div>
+
+      {/* Diff Modal */}
+      {compareVersions && (
+        <DiffModal
+          versionIdA={compareVersions.a}
+          versionIdB={compareVersions.b}
+          onClose={() => setCompareVersions(null)}
+        />
+      )}
+
+      {/* Share Dialog */}
+      {showShareDialog && activeDocId && ShareDialog && (
+        <ShareDialog
+          documentId={activeDocId}
+          ownerId={user.id}
+          onClose={() => setShowShareDialog(false)}
+        />
+      )}
     </div>
   )
 }

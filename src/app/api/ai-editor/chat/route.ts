@@ -1,7 +1,12 @@
-import { GoogleGenAI } from '@google/genai'
+import { GoogleGenAI, type Part } from '@google/genai'
 import { NextRequest, NextResponse } from 'next/server'
 import { functionTools } from '@/lib/function-tools'
 import { executeFunctionCall } from '@/lib/execute-function'
+
+interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
 
 const genai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! })
 
@@ -43,7 +48,7 @@ Always respond in the same language the user uses. If they speak Indonesian, res
 
     // Prepare content parts for Gemini
     const userMessage = messages[messages.length - 1]
-    const contentParts: any[] = []
+    const contentParts: Part[] = []
 
     // Add file if present (multimodal support)
     if (file) {
@@ -62,7 +67,7 @@ Always respond in the same language the user uses. If they speak Indonesian, res
     contentParts.push({ text: userMessage.content })
 
     // Build conversation history
-    const conversationHistory = messages.slice(0, -1).map((m: any) => ({
+    const conversationHistory = (messages as ChatMessage[]).slice(0, -1).map((m) => ({
       role: m.role === 'user' ? 'user' as const : 'model' as const,
       parts: [{ text: m.content }]
     }))
@@ -86,7 +91,7 @@ Always respond in the same language the user uses. If they speak Indonesian, res
     // Check if AI wants to call a function
     const candidate = response.candidates?.[0]
     const parts = candidate?.content?.parts || []
-    const functionCallPart = parts.find((p: any) => p.functionCall)
+    const functionCallPart = parts.find((p) => p.functionCall)
 
     if (functionCallPart?.functionCall) {
       const fc = functionCallPart.functionCall
@@ -95,7 +100,7 @@ Always respond in the same language the user uses. If they speak Indonesian, res
       // Execute the function
       const executionResult = executeFunctionCall(
         fc.name!,
-        fc.args,
+        (fc.args ?? {}) as Record<string, unknown>,
         documentContent
       )
 
@@ -174,10 +179,11 @@ The function ${fc.name} was executed successfully. Confirm the change to the use
         content: response.text || 'No response'
       }
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('API error:', error)
+    const message = error instanceof Error ? error.message : String(error)
     return NextResponse.json(
-      { error: 'Failed to process request', details: error.message },
+      { error: 'Failed to process request', details: message },
       { status: 500 }
     )
   }

@@ -15,7 +15,7 @@ import {
 interface Message {
   role: 'user' | 'assistant'
   content: string
-  functionCall?: { name: string; args: any }
+  functionCall?: { name: string; args: Record<string, unknown> }
 }
 
 interface Props {
@@ -84,7 +84,7 @@ export default function AIChat({ documentContent, onDocumentUpdate }: Props) {
 
       setMessages(prev => [...prev, data.message])
       setSelectedFile(null)
-    } catch (error: any) {
+    } catch {
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: 'Error processing request. Please try again.'
