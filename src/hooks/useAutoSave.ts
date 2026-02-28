@@ -5,7 +5,11 @@ import { supabase } from '@/lib/supabase/client'
 
 export type SaveStatus = 'saved' | 'saving' | 'error'
 
-export function useAutoSave(documentId: string | null, content: string) {
+export function useAutoSave(
+  documentId: string | null,
+  content: string,
+  isOwner: boolean = true
+) {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved')
   const savedContentRef = useRef(content)
   const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
@@ -13,6 +17,9 @@ export function useAutoSave(documentId: string | null, content: string) {
   // ── Core save function ───────────────────────────────────
   const performSave = useCallback(async (contentToSave: string) => {
     if (!documentId) return
+    // Only the document owner should auto-save
+    if (!isOwner) return
+
     setSaveStatus('saving')
     try {
       const { error } = await supabase
@@ -29,7 +36,7 @@ export function useAutoSave(documentId: string | null, content: string) {
       setSaveStatus('error')
       throw err
     }
-  }, [documentId])
+  }, [documentId, isOwner])
 
   // ── Manual "Save Now" exposed to callers ─────────────────
   const saveNow = useCallback(async () => {
@@ -39,10 +46,12 @@ export function useAutoSave(documentId: string | null, content: string) {
 
   // ── Auto-save: debounce 2s after content changes ─────────
   useEffect(() => {
-    if (!documentId) return
+    if (!documentId || !isOwner) return
     if (content === savedContentRef.current) return
 
-    // update the ref so saveNow always has latest content
+    // Guard: never save empty content over non-empty saved content
+    if (!content && savedContentRef.current) return
+
     savedContentRef.current = content
     setSaveStatus('saving')
 
@@ -59,7 +68,8 @@ export function useAutoSave(documentId: string | null, content: string) {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current)
     }
-  }, [documentId, content, performSave])
+  }, [documentId, content, performSave, isOwner])
 
   return { saveStatus, saveNow }
 }
+

@@ -1,17 +1,21 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Panel, Group as PanelGroup, Separator as PanelResizeHandle } from 'react-resizable-panels'
 import DocumentEditor from '@/components/DocumentEditor'
 import AIChat from '@/components/AIChat'
 import { DocsSidebar } from '@/components/DocsSidebar'
 import { VersionTimeline } from '@/components/VersionTimeline'
 import { DiffModal } from '@/components/DiffModal'
+import { PresenceIndicator } from '@/components/PresenceIndicator'
 import { useAuth } from '@/components/AuthProvider'
 import { supabase } from '@/lib/supabase/client'
 import { useAutoSave } from '@/hooks/useAutoSave'
 import { useAutoSnapshot } from '@/hooks/useAutoSnapshot'
-import { useRealtimeDocument } from '@/hooks/useRealtimeDocument'
+import { useCollaboration } from '@/hooks/useCollaboration'
+import { useThrottle } from '@/hooks/useThrottle'
+import { useDebouncedCallback } from '@/hooks/useDebouncedCallback'
 import { getDocument, renameDocument, type DocumentSummary } from '@/lib/documents'
 import {
   FileText,
@@ -149,14 +153,19 @@ function AuthForm() {
 // ─── Main Editor Page ────────────────────────────────────────
 export default function EditorPage() {
   const { user, loading: authLoading } = useAuth()
+  const searchParams = useSearchParams()
   const [activeDocId, setActiveDocId] = useState<string | null>(null)
   const [activeDocTitle, setActiveDocTitle] = useState<string>('')
+  const [activeDocOwnerId, setActiveDocOwnerId] = useState<string | null>(null)
   const [docLoading, setDocLoading] = useState(false)
   const [isRenaming, setIsRenaming] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [showShareDialog, setShowShareDialog] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
   const [compareVersions, setCompareVersions] = useState<{ a: string; b: string } | null>(null)
+
+  // Is current user the owner of the active document?
+  const isDocOwner = !!(user && activeDocOwnerId && user.id === activeDocOwnerId)
 
   // Undo/Redo
   const {
@@ -166,8 +175,8 @@ export default function EditorPage() {
     canUndo, canRedo
   } = useUndoRedo('')
 
-  // Auto-save with status
-  const { saveStatus, saveNow } = useAutoSave(activeDocId, documentContent)
+  // Auto-save with status (only owner can save)
+  const { saveStatus, saveNow } = useAutoSave(activeDocId, documentContent, isDocOwner)
 
   // Auto-snapshot (every 30s)
   const { saveNamedVersion } = useAutoSnapshot({
@@ -176,11 +185,70 @@ export default function EditorPage() {
     userId: user?.id ?? '',
   })
 
-  // Realtime
-  const handleRealtimeUpdate = useCallback((content: string) => {
-    pushHistory(content)
+  // ── Collaboration ──────────────────────────────────────────
+  // Guard against infinite loop: flag set when receiving remote content
+  const isReceivingRemoteChange = useRef(false)
+
+  const handleRemoteContentChange = useCallback((newContent: string) => {
+    isReceivingRemoteChange.current = true
+    pushHistory(newContent)
+    // Use a longer timeout to ensure React finishes batching state updates
+    // before we re-enable broadcasting
+    setTimeout(() => { isReceivingRemoteChange.current = false }, 100)
   }, [pushHistory])
-  useRealtimeDocument(activeDocId, handleRealtimeUpdate)
+
+  const { collaborators, typingUsers, isConnected, broadcastContentChange, updateCursor } =
+    useCollaboration({
+      documentId: activeDocId,
+      userId: user?.id ?? '',
+      displayName: user?.email?.split('@')[0] ?? 'Anonymous',
+      onContentChange: handleRemoteContentChange,
+    })
+
+  // Debounced broadcast (150ms after user stops typing — snappy)
+  const debouncedBroadcast = useDebouncedCallback(
+    (content: string) => broadcastContentChange(content),
+    150
+  )
+
+  // Throttled cursor update (max 10x/sec)
+  const throttledUpdateCursor = useThrottle(updateCursor, 100)
+
+  // ── Auto-open document from query param (?docId=...) ──────
+  const docIdHandled = useRef(false)
+  useEffect(() => {
+    if (docIdHandled.current || !user || authLoading) return
+    const docIdParam = searchParams.get('docId')
+    if (!docIdParam) return
+    docIdHandled.current = true
+    setDocLoading(true)
+
+    // Try sessionStorage first (set by SharedDocumentView "Buka di Editor")
+    const cached = sessionStorage.getItem(`shared_doc_${docIdParam}`)
+    if (cached) {
+      try {
+        const doc = JSON.parse(cached)
+        setActiveDocId(doc.id)
+        setActiveDocTitle(doc.title)
+        setActiveDocOwnerId(doc.user_id)
+        resetHistory(doc.content || '')
+        sessionStorage.removeItem(`shared_doc_${docIdParam}`)
+        setDocLoading(false)
+        return
+      } catch { /* fall through to getDocument */ }
+    }
+
+    // Fallback: try getDocument directly (works if user is owner)
+    getDocument(docIdParam)
+      .then((fullDoc) => {
+        setActiveDocId(fullDoc.id)
+        setActiveDocTitle(fullDoc.title)
+        setActiveDocOwnerId(fullDoc.user_id)
+        resetHistory(fullDoc.content)
+      })
+      .catch((err) => console.error('Failed to open shared doc:', err))
+      .finally(() => setDocLoading(false))
+  }, [user, authLoading, searchParams, resetHistory])
 
   // ── Open document ─────────────────────────────────────────
   async function handleDocumentSelect(doc: DocumentSummary) {
@@ -190,6 +258,7 @@ export default function EditorPage() {
       const fullDoc = await getDocument(doc.id)
       setActiveDocId(fullDoc.id)
       setActiveDocTitle(fullDoc.title)
+      setActiveDocOwnerId(fullDoc.user_id)
       resetHistory(fullDoc.content)
     } catch (err) {
       console.error('Failed to open document:', err)
@@ -209,10 +278,20 @@ export default function EditorPage() {
 
   function handleContentChange(newContent: string) {
     pushHistory(newContent)
+    // Only broadcast locally-initiated changes
+    if (!isReceivingRemoteChange.current) {
+      debouncedBroadcast(newContent)
+    }
   }
 
   function handleAIUpdate(newContent: string) {
     pushHistory(newContent)
+    // AI updates are always local, broadcast immediately
+    broadcastContentChange(newContent)
+  }
+
+  function handleCursorChange(line: number, col: number) {
+    throttledUpdateCursor(line, col)
   }
 
   function downloadDocument() {
@@ -246,6 +325,9 @@ export default function EditorPage() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [undo, redo])
 
+  // Suppress unused var warning for saveNamedVersion
+  void saveNamedVersion
+
   // Auth loading
   if (authLoading) {
     return (
@@ -264,6 +346,11 @@ export default function EditorPage() {
   const ShareDialog = showShareDialog
     ? require('@/components/ShareDialog').ShareDialog
     : null
+
+  // Typing users display names
+  const typingNames = typingUsers
+    .map((uid) => collaborators.find((c) => c.userId === uid)?.displayName ?? 'Someone')
+    .join(', ')
 
   return (
     <div className="ai-editor-root">
@@ -294,8 +381,9 @@ export default function EditorPage() {
                     setIsRenaming(true)
                     await renameDocument(activeDocId, newTitle)
                     setActiveDocTitle(newTitle)
-                  } catch (err: any) {
-                    alert(`Gagal mengganti nama: ${err.message || 'Error tidak diketahui'}`)
+                  } catch (err: unknown) {
+                    const msg = err instanceof Error ? err.message : 'Error tidak diketahui'
+                    alert(`Gagal mengganti nama: ${msg}`)
                   } finally {
                     setIsRenaming(false)
                   }
@@ -320,6 +408,16 @@ export default function EditorPage() {
           )}
         </div>
 
+        {/* Presence Indicator — center/right of topbar */}
+        {activeDocId && (
+          <div className="topbar-presence">
+            <PresenceIndicator
+              collaborators={collaborators}
+              isConnected={isConnected}
+            />
+          </div>
+        )}
+
         {activeDocId && (
           <div className="topbar-actions">
             <button className="topbar-btn" onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)">
@@ -338,15 +436,15 @@ export default function EditorPage() {
               <Share2 size={12} strokeWidth={1.5} />
               Share
             </button>
-            {/* Save (immediate) */}
             <button
               className="topbar-btn topbar-btn-primary"
               onClick={async () => {
                 try {
                   await saveNow()
                   alert('Dokumen berhasil disimpan!')
-                } catch (err: any) {
-                  alert(`Gagal simpan: ${err.message || 'Error'}`)
+                } catch (err: unknown) {
+                  const msg = err instanceof Error ? err.message : 'Error'
+                  alert(`Gagal simpan: ${msg}`)
                 }
               }}
               title="Save (Ctrl+S)"
@@ -398,11 +496,25 @@ export default function EditorPage() {
             </div>
           ) : activeDocId ? (
             <div className="panels-wrapper" key={activeDocId}>
+              {/* Typing indicator */}
+              {typingUsers.length > 0 && (
+                <div className="typing-indicator">
+                  <span className="typing-dots">
+                    <span /><span /><span />
+                  </span>
+                  <span className="typing-text">
+                    {typingNames} sedang mengetik...
+                  </span>
+                </div>
+              )}
+
               <PanelGroup orientation="horizontal">
                 <Panel id="editor" defaultSize={50} minSize={30}>
                   <DocumentEditor
                     content={documentContent}
                     onChange={handleContentChange}
+                    collaborators={collaborators}
+                    onCursorChange={handleCursorChange}
                   />
                 </Panel>
 
